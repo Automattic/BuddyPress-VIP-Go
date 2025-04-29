@@ -1,43 +1,48 @@
 <?php
 /**
  * Integrates BuddyPress into VIP's File Hosting Service.
+ * 
+ * @package BuddyPress-VIP-Go
  */
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'bp_init', function() {
-	/*
-	 * Tweaks for fetching avatars and cover images -- bp_core_fetch_avatar() and bp_attachments_get_attachment().
-	 */
-	add_filter( 'bp_core_avatar_folder_dir',    '__return_empty_string' );
-	add_filter( 'bp_core_fetch_avatar_no_grav', '__return_true' );
-	add_filter( 'bp_core_default_avatar_user',  'vipbp_filter_user_avatar_urls', 10, 2 );
-	add_filter( 'bp_core_default_avatar_group', 'vipbp_filter_group_avatar_urls', 10, 2 );
-	add_filter( 'bp_attachments_pre_get_attachment', 'vipbp_filter_get_cover_image', 10, 2 );
+add_action(
+	'bp_init',
+	function () {
+		/*
+		* Tweaks for fetching avatars and cover images -- bp_core_fetch_avatar() and bp_attachments_get_attachment().
+		*/
+		add_filter( 'bp_core_avatar_folder_dir', '__return_empty_string' );
+		add_filter( 'bp_core_fetch_avatar_no_grav', '__return_true' );
+		add_filter( 'bp_core_default_avatar_user', 'vipbp_filter_user_avatar_urls', 10, 2 );
+		add_filter( 'bp_core_default_avatar_group', 'vipbp_filter_group_avatar_urls', 10, 2 );
+		add_filter( 'bp_attachments_pre_get_attachment', 'vipbp_filter_get_cover_image', 10, 2 );
 
-	/*
-	 * Tweaks for uploading user and group avatars -- bp_core_avatar_handle_upload().
-	 */
-	add_filter( 'bp_core_pre_avatar_handle_upload', 'vipbp_handle_avatar_upload', 10, 3 );
-	add_filter( 'bp_avatar_pre_handle_capture',     'vipbp_handle_avatar_capture', 10, 3 );
+		/*
+		* Tweaks for uploading user and group avatars -- bp_core_avatar_handle_upload().
+		*/
+		add_filter( 'bp_core_pre_avatar_handle_upload', 'vipbp_handle_avatar_upload', 10, 3 );
+		add_filter( 'bp_avatar_pre_handle_capture', 'vipbp_handle_avatar_capture', 10, 3 );
 
-	/*
-	 * Tweaks for uploading cover images -- bp_attachments_cover_image_ajax_upload().
-	 */
-	add_filter( 'bp_attachments_pre_cover_image_ajax_upload', 'vip_handle_cover_image_upload', 10, 2 );
+		/*
+		* Tweaks for uploading cover images -- bp_attachments_cover_image_ajax_upload().
+		*/
+		add_filter( 'bp_attachments_pre_cover_image_ajax_upload', 'vip_handle_cover_image_upload', 10, 2 );
 
-	/*
-	 * Tweaks for cropping user and group avatars -- bp_core_avatar_handle_crop().
-	 */
-	add_filter( 'bp_core_pre_avatar_handle_crop', 'vipbp_handle_avatar_crop', 10, 2 );
+		/*
+		* Tweaks for cropping user and group avatars -- bp_core_avatar_handle_crop().
+		*/
+		add_filter( 'bp_core_pre_avatar_handle_crop', 'vipbp_handle_avatar_crop', 10, 2 );
 
-	/*
-	 * Tweaks for deleting avatars and cover images -- bp_core_delete_existing_avatar() and bp_attachments_delete_file().
-	 */
-	add_filter( 'bp_core_pre_delete_existing_avatar', 'vipbp_delete_existing_avatar', 10, 2 );
-	add_filter( 'bp_attachments_pre_delete_file', 'vipbp_delete_cover_image', 10, 2 );
-} );
+		/*
+		* Tweaks for deleting avatars and cover images -- bp_core_delete_existing_avatar() and bp_attachments_delete_file().
+		*/
+		add_filter( 'bp_core_pre_delete_existing_avatar', 'vipbp_delete_existing_avatar', 10, 2 );
+		add_filter( 'bp_attachments_pre_delete_file', 'vipbp_delete_cover_image', 10, 2 );
+	} 
+);
 
 /**
  * Change user avatars' URLs to their locations on VIP Go FHS.
@@ -50,8 +55,8 @@ add_action( 'bp_init', function() {
  * It's normally used to override the fallback image for Gravatar, but by duplicating some logic, we
  * use it to here to set a custom URL to support VIP Go FHS without any core changes to BuddyPress.
  *
- * @param string $_ Unused.
- * @param array $params Parameters for fetching the avatar.
+ * @param string $_      Unused.
+ * @param array  $params Parameters for fetching the avatar.
  * @return string Avatar URL.
  */
 function vipbp_filter_user_avatar_urls( $_, $params ) {
@@ -64,6 +69,7 @@ function vipbp_filter_user_avatar_urls( $_, $params ) {
 
 	$retval = vipbp_filter_avatar_urls(
 		$params,
+		// phpcs:ignore Universal.Operators.DisallowShortTernary.Found
 		get_user_meta( $params['item_id'], 'vipbp-avatars', true ) ?: array()
 	);
 
@@ -85,8 +91,8 @@ function vipbp_filter_user_avatar_urls( $_, $params ) {
  * It's normally used to override the fallback image for Gravatar, but by duplicating some logic, we
  * use it to here to set a custom URL to support VIP Go FHS without any core changes to BuddyPress.
  *
- * @param string $_ Unused.
- * @param array $params Parameters for fetching the avatar.
+ * @param string $_      Unused.
+ * @param array  $params Parameters for fetching the avatar.
  * @return string Avatar URL.
  */
 function vipbp_filter_group_avatar_urls( $_, $params ) {
@@ -99,6 +105,7 @@ function vipbp_filter_group_avatar_urls( $_, $params ) {
 
 	$retval = vipbp_filter_avatar_urls(
 		$params,
+		// phpcs:ignore Universal.Operators.DisallowShortTernary.Found
 		groups_get_groupmeta( $params['item_id'], 'vipbp-group-avatars', true ) ?: array()
 	);
 
@@ -145,9 +152,9 @@ function vipbp_filter_avatar_urls( $params, $meta ) {
 
 		// Check email address is set.
 		if ( empty( $params['email'] ) ) {
-			if ( $params['object'] === 'user' ) {
+			if ( 'user' === $params['object'] ) {
 				$params['email'] = bp_core_get_user_email( $params['item_id'] );
-			} elseif ( $params['object'] === 'group' || $params['object'] === 'blog' ) {
+			} elseif ( 'group' === $params['object'] || 'blog' === $params['object'] ) {
 				$params['email'] = $params['item_id'] . '-' . $params['object'] . '@' . bp_get_root_domain();
 			}
 		}
@@ -157,7 +164,7 @@ function vipbp_filter_avatar_urls( $params, $meta ) {
 		$gravatar       .= md5( strtolower( $params['email'] ) );
 
 		$gravatar_args = array(
-			's' => $params['width']
+			's' => $params['width'],
 		);
 
 		if ( ! empty( $params['force_default'] ) ) {
@@ -169,14 +176,16 @@ function vipbp_filter_avatar_urls( $params, $meta ) {
 		}
 
 		// Only set default image if 'Gravatar Logo' is not requested.
-		if ( $default_grav !== 'gravatar_default' ) {
+		if ( 'gravatar_default' !== $default_grav ) {
 			$gravatar_args['d'] = $default_grav;
 		}
 
-		$retval = esc_url( add_query_arg(
-			rawurlencode_deep( array_filter( $gravatar_args ) ),
-			$gravatar
-		) );
+		$retval = esc_url(
+			add_query_arg(
+				rawurlencode_deep( array_filter( $gravatar_args ) ),
+				$gravatar
+			) 
+		);
 
 		if ( $switched ) {
 			restore_current_blog();
@@ -195,7 +204,8 @@ function vipbp_filter_avatar_urls( $params, $meta ) {
 		'w'      => $meta['ui_width'],
 
 		// Crop avatar.
-		'crop'   => sprintf( '%dpx,%dpx,%dpx,%dpx',
+		'crop'   => sprintf(
+			'%dpx,%dpx,%dpx,%dpx',
 			$meta['crop_x'],
 			$meta['crop_y'],
 			$meta['crop_w'],
@@ -234,7 +244,9 @@ function vipbp_filter_avatar_urls( $params, $meta ) {
  * happening.
  *
  * @param null|string $value If null is returned, proceed with default behaviour. Otherwise, value returned verbatim.
- * @param array $args {
+ * @param array       $args {
+ *     Array of arguments.
+ *
  *     @type string $object_dir  The object dir (eg: members/groups). Defaults to members.
  *     @type int    $item_id     The object id (eg: a user or a group id). Defaults to current user.
  *     @type string $type        The type of the attachment which is also the subdir where files are saved.
@@ -253,28 +265,33 @@ function vipbp_filter_get_cover_image( $value, $args ) {
 		$switched = true;
 	}
 
-	if ( $args['object_dir'] === 'members' ) {
+	if ( 'members' === $args['object_dir'] ) {
 		$component = 'xprofile';
 		$meta      = get_user_meta( $args['item_id'], 'vipbp-user-cover', true );
 
-	} elseif ( $args['object_dir'] === 'groups' ) {
+	} elseif ( 'groups' === $args['object_dir'] ) {
 		$component = 'groups';
-		$meta      = groups_get_groupmeta( $args['item_id'], 'vipbp-group-cover', true );
+		if ( bp_is_active( 'groups' ) ) {
+			$meta = groups_get_groupmeta( $args['item_id'], 'vipbp-group-cover', true );
+		}
 	}
 
 	$dimensions = bp_attachments_get_cover_image_dimensions( $component );
 
 	if ( $meta && $dimensions ) {
-		$retval = add_query_arg( array(
-			// Fit the width.
-			'w'    => (int) $dimensions['width'],
+		$retval = add_query_arg(
+			array(
+				// Fit the width.
+				'w'     => (int) $dimensions['width'],
 
-			// Crop the middle part of the image.
-			'crop' => sprintf( '0,25,%dpx,%dpx', $dimensions['width'], $dimensions['height'] ),
+				// Crop the middle part of the image.
+				'crop'  => sprintf( '0,25,%dpx,%dpx', $dimensions['width'], $dimensions['height'] ),
 
-			// Removes EXIF and IPTC data.
-			'strip'  => 'info',
-		), $meta['url'] );
+				// Removes EXIF and IPTC data.
+				'strip' => 'info',
+			),
+			$meta['url'] 
+		);
 
 	} else {
 		$retval = false;
@@ -292,8 +309,8 @@ function vipbp_filter_get_cover_image( $value, $args ) {
  *
  * Permission checks are made upstream in xprofile_screen_change_avatar().
  *
- * @param string $_ Unused.
- * @param array $file Appropriate entry from $_FILES superglobal.
+ * @param string $_                 Unused.
+ * @param array  $file              Appropriate entry from $_FILES superglobal.
  * @param string $upload_dir_filter Callable function to get uploaded avatar and upload directory info.
  * @return false Shortcircuits bp_core_avatar_handle_upload().
  */
@@ -306,7 +323,7 @@ function vipbp_handle_avatar_upload( $_, $file, $upload_dir_filter ) {
 	}
 
 	if ( ! function_exists( 'wp_handle_upload' ) ) {
-		require_once( ABSPATH . '/wp-admin/includes/file.php' );
+		require_once ABSPATH . '/wp-admin/includes/file.php';
 	}
 
 	$bp                                = buddypress();
@@ -320,15 +337,19 @@ function vipbp_handle_avatar_upload( $_, $file, $upload_dir_filter ) {
 	}
 
 
-	// Upload file.
+	// Handle file upload.
 	$uploaded_file = $file['file'];
-	$result        = wp_handle_upload( $uploaded_file, array(
-		'action'    => 'wp_handle_upload', // Matches Core's action for uploads, to ensure VIP Go fileservice filters are applied
-		'test_form' => false,
-	) );
+	$result        = wp_handle_upload(
+		$uploaded_file,
+		array(
+			'action'    => 'wp_handle_upload', // Matches Core's action for uploads, to ensure VIP Go fileservice filters are applied.
+			'test_form' => false,
+		) 
+	);
 
 	if ( ! empty( $result['error'] ) ) {
-		bp_core_add_message( sprintf( __( 'Upload failed! Error was: %s', 'buddypress' ), $result['error'] ), 'error' );
+		/* translators: %s: Error message returned during the upload process. */
+		bp_core_add_message( sprintf( __( 'Upload failed! Error was: %s', 'buddypress-vip-go' ), $result['error'] ), 'error' );
 
 		if ( $switched ) {
 			restore_current_blog();
@@ -338,7 +359,7 @@ function vipbp_handle_avatar_upload( $_, $file, $upload_dir_filter ) {
 	}
 
 
-	// Make sure image will fit cropper.
+	// Make sure the image will fit the cropper.
 	if ( $crop_ui_available_width < $crop_image_width ) {
 
 		// $crop_image_width has to be larger than the "bpfull" image size.
@@ -349,29 +370,38 @@ function vipbp_handle_avatar_upload( $_, $file, $upload_dir_filter ) {
 		}
 	}
 
-	$result['url'] = add_query_arg( 'w', $crop_image_width, $result['url'] );  // Does not upscale.
+	// Add query argument to ensure image is not upscaled.
+	$result['url'] = add_query_arg( 'w', $crop_image_width, $result['url'] );
 
 
 	// Set placeholder meta for image crop.
-	if ( $upload_dir_filter === 'xprofile_avatar_upload_dir' ) {
-		update_user_meta( (int) $object_id, "vipbp-{$avatar_type}", array(
-			'crop_w'   => bp_core_avatar_full_width(),
-			'crop_h'   => bp_core_avatar_full_height(),
-			'crop_x'   => 0,
-			'crop_y'   => 0,
-			'ui_width' => $crop_image_width,
-			'url'      => $result['url'],
-		) );
+	if ( 'xprofile_avatar_upload_dir' === $upload_dir_filter ) {
+		update_user_meta(
+			(int) $object_id,
+			"vipbp-{$avatar_type}",
+			array(
+				'crop_w'   => bp_core_avatar_full_width(),
+				'crop_h'   => bp_core_avatar_full_height(),
+				'crop_x'   => 0,
+				'crop_y'   => 0,
+				'ui_width' => $crop_image_width,
+				'url'      => $result['url'],
+			) 
+		);
 
-	} elseif ( $upload_dir_filter === 'groups_avatar_upload_dir' ) {
-		groups_update_groupmeta( (int) $object_id, "vipbp-{$avatar_type}", array(
-			'crop_w'   => bp_core_avatar_full_width(),
-			'crop_h'   => bp_core_avatar_full_height(),
-			'crop_x'   => 0,
-			'crop_y'   => 0,
-			'ui_width' => $crop_image_width,
-			'url'      => $result['url'],
-		) );
+	} elseif ( 'groups_avatar_upload_dir' === $upload_dir_filter ) {
+		groups_update_groupmeta(
+			(int) $object_id,
+			"vipbp-{$avatar_type}",
+			array(
+				'crop_w'   => bp_core_avatar_full_width(),
+				'crop_h'   => bp_core_avatar_full_height(),
+				'crop_x'   => 0,
+				'crop_y'   => 0,
+				'ui_width' => $crop_image_width,
+				'url'      => $result['url'],
+			) 
+		);
 	}
 
 
@@ -383,7 +413,9 @@ function vipbp_handle_avatar_upload( $_, $file, $upload_dir_filter ) {
 
 	if ( BP_Attachment_Avatar::is_too_small( $bp->avatar_admin->image->file ) ) {
 		bp_core_add_message(
-			sprintf( __( 'You have selected an image that is smaller than recommended. For best results, upload a picture larger than %d x %d pixels.', 'buddypress' ),
+			sprintf(
+				/* translators: 1: Avatar width. 2: Avatar height. */
+				__( 'You have selected an image that is smaller than recommended. For best results, upload a picture larger than %1$d x %2$d pixels.', 'buddypress-vip-go' ),
 				bp_core_avatar_full_width(),
 				bp_core_avatar_full_height()
 			),
@@ -417,11 +449,12 @@ function vipbp_handle_avatar_capture( $_, $data, $item_id ) {
 	}
 
 	if ( ! function_exists( 'wp_tempnam' ) ) {
-		require_once( ABSPATH . '/wp-admin/includes/file.php' );
+		require_once ABSPATH . '/wp-admin/includes/file.php';
 	}
 
 	// Save bytestream to disk.
 	$tmp_name = wp_tempnam();
+	// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_file_put_contents
 	file_put_contents( $tmp_name, $data );
 
 	// Figure out the MIME type.
@@ -430,6 +463,7 @@ function vipbp_handle_avatar_capture( $_, $data, $item_id ) {
 	finfo_close( $finfo );
 
 	$new_tmp_name = str_replace( '.tmp', '.' . array_search( $mime_type, get_allowed_mime_types(), true ), $tmp_name );
+	// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.file_ops_rename
 	rename( $tmp_name, $new_tmp_name );
 	$tmp_name = $new_tmp_name;
 
@@ -447,10 +481,12 @@ function vipbp_handle_avatar_capture( $_, $data, $item_id ) {
 	bp_core_avatar_handle_upload( $file, 'xprofile_avatar_upload_dir' );
 
 	// And crop it.
-	bp_core_avatar_handle_crop( array(
-		'item_id'       => $item_id,
-		'original_file' => $tmp_name,
-	) );
+	bp_core_avatar_handle_crop(
+		array(
+			'item_id'       => $item_id,
+			'original_file' => $tmp_name,
+		) 
+	);
 
 	if ( $switched ) {
 		restore_current_blog();
@@ -460,18 +496,18 @@ function vipbp_handle_avatar_capture( $_, $data, $item_id ) {
 }
 
 /**
- * Upload cover images to VIP Go FHS. Overrides default behaviour.
+ * Upload cover images to VIP Files Service. Overrides default behaviour.
  *
  * This function duplicates significant logic from BuddyPress upstream because
- * bp_attachments_cover_image_ajax_upload() could be significantly improved;
+ * `bp_attachments_cover_image_ajax_upload()` could be significantly improved;
  * it does too much. We'll be able to simply this function in the future.
  *
  * Permission checks are made upstream in bp_attachments_cover_image_ajax_upload().
  *
- * @param string $_ Unused.
- * @param array $args
- * @param array $needs_reset Stores original value of certain globals we need to revert to later.
- * @param array $object_data
+ * @param string $_           Unused.
+ * @param array  $args        Array of arguments for the cover image upload.
+ * @param array  $needs_reset Stores original value of certain globals we need to revert to later.
+ * @param array  $object_data Array containing additional data about the object being processed.
  * @return array Shortcircuits bp_attachments_cover_image_ajax_upload().
  */
 function vip_handle_cover_image_upload( $_, $args, $needs_reset, $object_data ) {
@@ -483,17 +519,21 @@ function vip_handle_cover_image_upload( $_, $args, $needs_reset, $object_data ) 
 	}
 
 	if ( ! function_exists( 'wp_handle_upload' ) ) {
-		require_once( ABSPATH . '/wp-admin/includes/file.php' );
+		require_once ABSPATH . '/wp-admin/includes/file.php';
 	}
 
 	$bp = buddypress();
 
 	// Upload file.
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 	$uploaded_file = $_FILES['file'];
-	$result        = wp_handle_upload( $uploaded_file, array(
-		'action'    => 'wp_handle_upload', // Matches Core's action for uploads, to ensure VIP Go fileservice filters are applied
-		'test_form' => false,
-	) );
+	$result        = wp_handle_upload(
+		$uploaded_file,
+		array(
+			'action'    => 'wp_handle_upload', // Matches Core's action for uploads, to ensure VIP fileservice filters are applied.
+			'test_form' => false,
+		)
+	);
 
 
 	// Reset globals changed in bp_attachments_cover_image_ajax_upload().
@@ -508,29 +548,44 @@ function vip_handle_cover_image_upload( $_, $args, $needs_reset, $object_data ) 
 	if ( ! empty( $result['error'] ) ) {
 		return array(
 			'result'  => false,
-			'message' => sprintf( __( 'Upload Failed! Error was: %s', 'buddypress' ), $result['error'] ),
+			'message' => sprintf(
+				/* translators: %s: Error message returned during the upload process. */
+				__( 'Upload Failed! Error was: %s', 'buddypress-vip-go' ),
+				$result['error']
+			),
 			'type'    => 'upload_error',
 		);
 	}
 
 	// Set meta so we know there's an image.
-	if ( $args['object'] === 'user' ) {
-		update_user_meta( $args['item_id'], 'vipbp-user-cover', array(
-			'url' => $result['url'],
-		) );
+	if ( 'user' === $args['object'] ) {
+		update_user_meta(
+			$args['item_id'],
+			'vipbp-user-cover',
+			array(
+				'url' => $result['url'],
+			)
+		);
 
-	} elseif ( $args['object'] === 'group' ) {
-		groups_update_groupmeta( $args['item_id'], 'vipbp-group-cover', array(
-			'url' => $result['url'],
-		) );
+	} elseif ( 'group' === $args['object'] ) {
+		groups_update_groupmeta(
+			$args['item_id'],
+			'vipbp-group-cover',
+			array(
+				'url' => $result['url'],
+			) 
+		);
 	}
 
-	do_action( $object_data['component'] . '_cover_image_uploaded', (int) $args['item_id'] );
+	do_action(
+		$object_data['component'] . '_cover_image_uploaded',
+		(int) $args['item_id']
+	);
 
 	$retval = array(
 		'result'        => true,
 		'feedback_code' => 1,
-		'name'          => basename( $result['url']),
+		'name'          => basename( $result['url'] ),
 		'url'           => $result['url'],
 	);
 
@@ -549,7 +604,7 @@ function vip_handle_cover_image_upload( $_, $args, $needs_reset, $object_data ) 
  *
  * Permission checks are made upstream in xprofile_screen_change_avatar().
  *
- * @param string $_ Unused.
+ * @param string       $_ Unused.
  * @param array|string $args {
  *     Array of function parameters.
  *
@@ -584,12 +639,12 @@ function vipbp_handle_avatar_crop( $_, $args ) {
 		$switched = true;
 	}
 
-	if ( $args['object'] === 'user' ) {
+	if ( 'user' === $args['object'] ) {
 		$meta = get_user_meta( (int) $args['item_id'], 'vipbp-' . $args['avatar_dir'], true );
 		$meta = wp_parse_args( $cropping_meta, $meta );
 		update_user_meta( (int) $args['item_id'], 'vipbp-' . $args['avatar_dir'], $meta );
 
-	} elseif ( $args['object'] === 'group' ) {
+	} elseif ( 'group' === $args['object'] ) {
 		$meta = groups_get_groupmeta( (int) $args['item_id'], 'vipbp-' . $args['avatar_dir'], true );
 		$meta = wp_parse_args( $cropping_meta, $meta );
 		groups_update_groupmeta( (int) $args['item_id'], 'vipbp-' . $args['avatar_dir'], $meta );
@@ -607,7 +662,7 @@ function vipbp_handle_avatar_crop( $_, $args ) {
  *
  * Permission checks are made upstream in several screen handling functions.
  *
- * @param string $_ Unused.
+ * @param string       $_ Unused.
  * @param array|string $args {
  *     Array of function parameters.
  *
@@ -632,9 +687,9 @@ function vipbp_delete_existing_avatar( $_, $args ) {
 	}
 
 	if ( empty( $args['item_id'] ) ) {
-		if ( $args['object'] === 'user' ) {
+		if ( 'user' === $args['object'] ) {
 			$args['item_id'] = bp_displayed_user_id();
-		} elseif ( $args['object'] === 'group' ) {
+		} elseif ( 'group' === $args['object'] ) {
 			$args['item_id'] = buddypress()->groups->current_group->id;
 		}
 
@@ -650,11 +705,11 @@ function vipbp_delete_existing_avatar( $_, $args ) {
 	}
 
 	if ( empty( $args['avatar_dir'] ) ) {
-		if ( $args['object'] === 'user' ) {
+		if ( 'user' === $args['object'] ) {
 			$args['avatar_dir'] = 'avatars';
-		} elseif ( $args['object'] === 'group' ) {
+		} elseif ( 'group' === $args['object'] ) {
 			$args['avatar_dir'] = 'group-avatars';
-		} elseif ( $args['object'] === 'blog' ) {
+		} elseif ( 'blog' === $args['object'] ) {
 			$args['avatar_dir'] = 'blog-avatars';
 		}
 
@@ -670,11 +725,11 @@ function vipbp_delete_existing_avatar( $_, $args ) {
 	}
 
 	// Remove crop meta.
-	if ( $args['object'] === 'user' ) {
+	if ( 'user' === $args['object'] ) {
 		$meta = get_user_meta( (int) $args['item_id'], 'vipbp-' . $args['avatar_dir'], true );
 		delete_user_meta( (int) $args['item_id'], 'vipbp-' . $args['avatar_dir'] );
 
-	} elseif ( $args['object'] === 'group' ) {
+	} elseif ( 'group' === $args['object'] ) {
 		$meta = groups_get_groupmeta( (int) $args['item_id'], 'vipbp-' . $args['avatar_dir'], true );
 		groups_delete_groupmeta( (int) $args['item_id'], 'vipbp-' . $args['avatar_dir'] );
 	}
@@ -698,8 +753,8 @@ function vipbp_delete_existing_avatar( $_, $args ) {
  *
  * Permission checks are made upstream in several screen handling functions.
  *
- * @param string $_ Unused.
- * @param array Array of arguments for the attachment deletion.
+ * @param string $_    Unused.
+ * @param array  $args Array of arguments for the attachment deletion.
  * @return false Shortcircuits bp_attachments_delete_file().
  */
 function vipbp_delete_cover_image( $_, $args ) {
@@ -711,11 +766,11 @@ function vipbp_delete_cover_image( $_, $args ) {
 		$switched = true;
 	}
 
-	if ( $args['object_dir'] === 'members' ) {
+	if ( 'members' === $args['object_dir'] ) {
 		$meta = get_user_meta( $args['item_id'], 'vipbp-user-cover', true );
 		delete_user_meta( $args['item_id'], 'vipbp-user-cover' );
 
-	} elseif ( $args['object_dir'] === 'groups' ) {
+	} elseif ( 'groups' === $args['object_dir'] ) {
 		$meta = groups_get_groupmeta( $args['item_id'], 'vipbp-group-cover', true );
 		groups_delete_groupmeta( $args['item_id'], 'vipbp-group-cover' );
 	}

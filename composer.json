@@ -1,0 +1,58 @@
+{
+	"name": "automattic/buddypress-vip-go",
+	"description": "Makes BuddyPress' media work with WordPress VIP's hosting.",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"authors": [
+        {
+			"name": "Human Made",
+			"homepage": "https://humanmade.com/"
+		},
+		{
+			"name": "Automattic",
+			"homepage": "https://automattic.com/"
+		}
+	],
+	"support": {
+		"issues": "https://github.com/Automattic/BuddyPress-VIP-Go/issues",
+		"source": "https://github.com/Automattic/BuddyPress-VIP-Go"
+	},
+	"require": {
+		"composer/installers": "^2",
+		"php": ">=8.2"
+	},
+	"require-dev": {
+		"automattic/vipwpcs": "^3",
+		"php-parallel-lint/php-parallel-lint": "^1.0",
+		"phpcompatibility/phpcompatibility-wp": "^2.1",
+		"wp-coding-standards/wpcs": "^3.1"
+	},
+	"scripts": {
+		"coverage": [
+			"@putenv WP_MULTISITE=1",
+			"@php ./vendor/bin/phpunit --exclude=ms-excluded --coverage-html ./.phpunit.cache/coverage-html"
+		],
+		"coverage-ci": [
+			"@putenv WP_MULTISITE=1",
+			"@php ./vendor/bin/phpunit --exclude=ms-excluded"
+		],
+		"cs": [
+			"@php ./vendor/bin/phpcs"
+		],
+		"cbf": [
+			"@php ./vendor/bin/phpcbf"
+		],
+		"lint": [
+			"@php ./vendor/php-parallel-lint/php-parallel-lint/parallel-lint . -e php --exclude vendor --exclude .git"
+		],
+		"lint-ci": [
+			"@php ./vendor/php-parallel-lint/php-parallel-lint/parallel-lint . -e php --exclude vendor --exclude .git --checkstyle"
+		]
+	},
+	"config": {
+		"allow-plugins": {
+			"composer/installers": true,
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	}
+}
