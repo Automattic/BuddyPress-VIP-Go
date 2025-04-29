@@ -2,7 +2,7 @@
 /**
  * BuddyPress VIP Go
  *
- * @package           BuddyPressVIP
+ * @package           BuddyPress-VIP-Go
  * @author            Human Made, WordPress VIP
  * @copyright         2016-onwards Shared and distributed between Paul Gibbs and contributors.
  * @license           GPL-2.0-or-later
@@ -22,10 +22,13 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
-add_action( 'bp_loaded', function() {
-	if ( ! class_exists( 'A8C_Files' ) || ! defined( 'FILES_CLIENT_SITE_ID' ) || !defined( 'FILES_ACCESS_TOKEN' ) ) {
-		return;
-	}
+add_action(
+	'bp_loaded',
+	function () {
+		if ( ! class_exists( 'A8C_Files' ) || ! defined( 'FILES_CLIENT_SITE_ID' ) || ! defined( 'FILES_ACCESS_TOKEN' ) ) {
+			return;
+		}
 
-	require_once __DIR__ . '/files.php';
-} );
+		require_once __DIR__ . '/files.php';
+	} 
+);
