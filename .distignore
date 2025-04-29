@@ -1,0 +1,11 @@
+/.distignore
+/.editorconfig
+/.git
+/.gitignore
+/.github
+/.phpcs.xml.dist
+/composer.json
+/package.json
+/package-lock.json
+/phpunit.xml.dist
+/tests
