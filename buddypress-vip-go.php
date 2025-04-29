@@ -1,13 +1,22 @@
 <?php
 /**
- * Plugin Name: BuddyPress for VIP Go
- * Plugin URI:  https://github.com/humanmade/buddypress-vip-go
- * Description: Makes BuddyPress' media work with Automattic's VIP Go hosting.
- * Author:      Human Made
- * Author URI:  https://hmn.md/
- * License:     GPLv2 or later.
- * Text Domain: buddypress-vip-go
- * Version:     1.0
+ * BuddyPress VIP Go
+ *
+ * @package           BuddyPressVIP
+ * @author            Human Made, WordPress VIP
+ * @copyright         2016-onwards Shared and distributed between Paul Gibbs and contributors.
+ * @license           GPL-2.0-or-later
+ *
+ * @wordpress-plugin
+ * Plugin Name:       BuddyPress VIP Go
+ * Description:       Makes BuddyPress' media work with WordPress VIP's hosting.
+ * Version:           1.0.0
+ * Requires at least: 4.4.2
+ * Requires PHP:      8.2
+ * Author:            Human Made, WordPress VIP
+ * Text Domain:       buddypress-vip-go
+ * License:           GPL v2 or later
+ * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  */
 
 // Exit if accessed directly.
