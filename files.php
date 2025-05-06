@@ -579,7 +579,10 @@ function vip_handle_cover_image_upload( $_, $args, $needs_reset, $object_data ) 
 
 	do_action(
 		$object_data['component'] . '_cover_image_uploaded',
-		(int) $args['item_id']
+		(int) $args['item_id'],
+		basename( $result['url'] ),
+		$result['url'],
+		1
 	);
 
 	$retval = array(
