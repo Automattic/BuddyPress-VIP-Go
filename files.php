@@ -29,7 +29,7 @@ add_action(
 		/*
 		* Tweaks for uploading cover images -- bp_attachments_cover_image_ajax_upload().
 		*/
-		add_filter( 'bp_attachments_pre_cover_image_ajax_upload', 'vip_handle_cover_image_upload', 10, 2 );
+		add_filter( 'bp_attachments_pre_cover_image_ajax_upload', 'vip_handle_cover_image_upload', 10, 4 );
 
 		/*
 		* Tweaks for cropping user and group avatars -- bp_core_avatar_handle_crop().
