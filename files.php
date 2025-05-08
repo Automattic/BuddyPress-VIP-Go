@@ -41,6 +41,11 @@ add_action(
 		*/
 		add_filter( 'bp_core_pre_delete_existing_avatar', 'vipbp_delete_existing_avatar', 10, 2 );
 		add_filter( 'bp_attachments_pre_delete_file', 'vipbp_delete_cover_image', 10, 2 );
+
+		/*
+		* Tweaks for handling temporary directory cleanup.
+		*/
+		add_filter( 'bp_core_pre_remove_temp_directory', 'vipbp_handle_temp_directory_removal', 10, 1 );
 	} 
 );
 
@@ -785,6 +790,66 @@ function vipbp_delete_cover_image( $_, $args ) {
 
 	if ( $switched ) {
 		restore_current_blog();
+	}
+
+	return false;
+}
+
+/**
+ * Handle temporary directory removal in a VIP Go compatible way.
+ *
+ * Since the VIP File System uses an object store without a true directory structure,
+ * we need to handle file cleanup differently. This function:
+ * 1. Uses the system /tmp directory for temporary operations
+ * 2. Avoids directory traversal operations
+ * 3. Uses WordPress's file system functions where possible
+ *
+ * @param string $directory Directory to remove.
+ * @return false Shortcircuits bp_core_remove_temp_directory().
+ */
+function vipbp_handle_temp_directory_removal( $directory ) {
+	if ( empty( $directory ) ) {
+		return false;
+	}
+
+	// Get the system temp directory
+	$tmp_dir = get_temp_dir();
+	
+	// If the directory is in /tmp, we can use normal file operations
+	if ( 0 === strpos( $directory, $tmp_dir ) ) {
+		// Use WordPress's file system functions
+		global $wp_filesystem;
+		if ( ! is_a( $wp_filesystem, 'WP_Filesystem_Base' ) ) {
+			$creds = request_filesystem_credentials( site_url() );
+			wp_filesystem( $creds );
+		}
+
+		if ( is_a( $wp_filesystem, 'WP_Filesystem_Base' ) ) {
+			$wp_filesystem->delete( $directory, true );
+		}
+	} else {
+		// For files in the VIP File System, we need to handle them differently
+		// since we can't do directory operations
+		$upload_dir = wp_upload_dir();
+		$basedir = $upload_dir['basedir'];
+		
+		// If the directory is within uploads, we need to handle it file by file
+		if ( 0 === strpos( $directory, $basedir ) ) {
+			// Get the relative path from uploads
+			$relative_path = substr( $directory, strlen( $basedir ) );
+			
+			// Use WordPress's file system functions to delete files
+			global $wp_filesystem;
+			if ( ! is_a( $wp_filesystem, 'WP_Filesystem_Base' ) ) {
+				$creds = request_filesystem_credentials( site_url() );
+				wp_filesystem( $creds );
+			}
+
+			if ( is_a( $wp_filesystem, 'WP_Filesystem_Base' ) ) {
+				// Delete the directory itself
+				$wp_filesystem->delete( $directory, true );
+			}
+		}
 	}
 
 	return false;
