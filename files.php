@@ -812,6 +812,12 @@ function vipbp_handle_temp_directory_removal( $directory ) {
 		return false;
 	}
 
+	// Handle vip:// protocol URLs
+	if ( 0 === strpos( $directory, 'vip://' ) ) {
+		// Convert vip:// URL to a regular path
+		$directory = str_replace( 'vip://', '', $directory );
+	}
+
 	// Get the system temp directory
 	$tmp_dir = get_temp_dir();
 	
@@ -852,5 +858,6 @@ function vipbp_handle_temp_directory_removal( $directory ) {
 		}
 	}
 
-	return false;
+	// Return an empty array to prevent the reset() error
+	return array();
 }
