@@ -21,6 +21,25 @@ This plugin ensures BuddyPress media functionality works correctly on WordPress 
 
 The plugin is essential for any BuddyPress site running on WordPress VIP, as it ensures media uploads, avatars, and other BuddyPress media features work reliably and securely in the VIP environment.
 
+### Implementation
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Automattic/BuddyPress-VIP-Go)
+
+Through the use of this plugin, profile and cover images are handled differently than the default.
+
+Profile and cover images for users and groups are stored in user and group metadata.
+
+- `vipbp-avatars` stores user avatars. It contains serialised data of four crop values, ui_width, URL, and filename keys.
+- `vipbp-user-cover` contains only a serialised URL key and value.
+- `vipbp-group-avatars` stores group avatars. It contains serialised data of four crop values, ui_width, URL, and filename keys. 
+- `vipbp-group-cover` contains only a serialised URL key and value.
+
+Webcam captures for user profiles are handled in the same way.
+
+For cropping, instead of creating a new image, we store the cropping coordinates and later let the Files Service dynamically crop the image on-demand via Photon-like query parameters.
+
+Deleting files is handled by deleting the meta data, and then calling `wp_delete_file()` with the previously stored URL.
+
 ## Installation
 
 1. Upload the `buddypress-vip-go` folder to the `/wp-content/plugins/` directory
