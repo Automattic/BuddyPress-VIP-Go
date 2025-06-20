@@ -60,6 +60,11 @@ add_action(
 		add_action( 'bb_video_after_preview_generate', 'vipbp_log_preview_generation_complete' );
 		add_action( 'bp_video_after_background_create_thumbnail', 'vipbp_log_thumbnail_creation_complete', 10, 1 );
 		add_action( 'bb_try_after_video_background_create_thumbnail', 'vipbp_log_thumbnail_creation_attempt_complete', 10, 1 );
+
+		/**
+		 * Tweaks for flushing the cache after moving a video.
+		 */
+		add_action( 'bp_video_after_save', 'vipbp_flush_cache_after_video_move', 99 );
 	} 
 );
 
@@ -1013,4 +1018,15 @@ function vipbp_log_thumbnail_creation_attempt_complete( $video ) {
 		'[VIPBP Video] Completed thumbnail creation attempt for video ID: %d',
 		$video->id
 	) );
+}
+
+/**
+ * Flush the cache for the video after it has been moved to a album.
+ *
+ * This function resets the BuddyPress media incrementor to ensure that
+ * any cached media data is invalidated after a video is moved.
+ */
+function vipbp_flush_cache_after_video_move() {
+	// Flush the cache for the video after it has been moved.
+	bp_core_reset_incrementor( 'bp_media' );
 }
