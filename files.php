@@ -60,6 +60,11 @@ add_action(
 		add_action( 'bb_video_after_preview_generate', 'vipbp_log_preview_generation_complete' );
 		add_action( 'bp_video_after_background_create_thumbnail', 'vipbp_log_thumbnail_creation_complete', 10, 1 );
 		add_action( 'bb_try_after_video_background_create_thumbnail', 'vipbp_log_thumbnail_creation_attempt_complete', 10, 1 );
+
+		/**
+		 * Tweaks for uploading group videos.
+		 */
+		add_filter( 'bp_core_pre_remove_temp_directory', 'vipbp_override_remove_temp_directory', 10, 3 );
 	} 
 );
 
@@ -1013,4 +1018,25 @@ function vipbp_log_thumbnail_creation_attempt_complete( $video ) {
 		'[VIPBP Video] Completed thumbnail creation attempt for video ID: %d',
 		$video->id
 	) );
+}
+
+/**
+ * Override bp_core_remove_temp_directory on VIP to use WP_Filesystem.
+ *
+ * @param bool   $override   Whether to override the default behavior.
+ * @param string $directory  The directory to remove.
+ * @param string $image_name The name of the image file to delete.
+ *
+ * @return bool True if overridden on VIP, otherwise false.
+ */
+function vipbp_override_remove_temp_directory( $override, $directory, $image_name ) {
+	$file_path = trailingslashit( $directory ) . $image_name . '.jpg';
+	if ( file_exists( $file_path ) ) {
+		// Skip default directory deletion logic.
+		wp_delete_file( $file_path );
+		return true;
+	} else {
+		// Continue with default behavior.
+		return false;
+	}
 }
