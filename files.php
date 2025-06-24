@@ -43,9 +43,15 @@ add_action(
 		add_filter( 'bp_attachments_pre_delete_file', 'vipbp_delete_cover_image', 10, 2 );
 
 		/*
+		 * Tweaks for uploading videos into groups.
+		 */
+		add_filter( 'bp_core_pre_remove_temp_directory', 'vipbp_override_remove_temp_directory', 10, 3 );
+
+    /*
 		 * Tweaks for flushing the cache after moving a video.
 		 */
 		add_action( 'bp_video_after_save', 'vipbp_flush_cache_after_video_move', 99 );
+
 	} 
 );
 
@@ -792,6 +798,28 @@ function vipbp_delete_cover_image( $_, $args ) {
 		restore_current_blog();
 	}
 
+	return false;
+}
+
+/**
+ * Override bp_core_remove_temp_directory on VIP to use WP_Filesystem.
+ *
+ * @param bool   $override   Whether to override the default behavior.
+ * @param string $directory  The directory to remove.
+ * @param string $image_name The name of the image file to delete.
+ *
+ * @return bool True if overridden on VIP, otherwise false.
+ */
+function vipbp_override_remove_temp_directory( $override, $directory, $image_name ) {
+	$file_path = trailingslashit( $directory ) . $image_name . '.jpg';
+	
+  if ( file_exists( $file_path ) ) {
+		// Skip default directory deletion logic.
+		wp_delete_file( $file_path );
+		return true;
+	}
+
+  // Continue with default behavior.
 	return false;
 }
 
