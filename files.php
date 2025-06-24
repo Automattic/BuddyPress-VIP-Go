@@ -1027,6 +1027,5 @@ function vipbp_log_thumbnail_creation_attempt_complete( $video ) {
  * any cached media data is invalidated after a video is moved.
  */
 function vipbp_flush_cache_after_video_move() {
-	// Flush the cache for the video after it has been moved.
 	bp_core_reset_incrementor( 'bp_media' );
 }
