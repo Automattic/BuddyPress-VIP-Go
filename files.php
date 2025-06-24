@@ -61,7 +61,7 @@ add_action(
 		add_action( 'bp_video_after_background_create_thumbnail', 'vipbp_log_thumbnail_creation_complete', 10, 1 );
 		add_action( 'bb_try_after_video_background_create_thumbnail', 'vipbp_log_thumbnail_creation_attempt_complete', 10, 1 );
 
-		/**
+		/*
 		 * Tweaks for flushing the cache after moving a video.
 		 */
 		add_action( 'bp_video_after_save', 'vipbp_flush_cache_after_video_move', 99 );
