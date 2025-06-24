@@ -14,10 +14,10 @@ Makes BuddyPress' media work with WordPress VIP's hosting.
 
 This plugin ensures BuddyPress media functionality works correctly on WordPress VIP's hosting environment by:
 
-* Routing all media uploads through VIP's secure file system, bypassing WordPress's default upload directory
-* Implementing VIP's security model for file access control and permissions
-* Optimizing media delivery through VIP's CDN and caching infrastructure
-* Ensuring proper integration with VIP's file storage and retrieval services
+- Routing all media uploads through VIP's secure file system, bypassing WordPress's default upload directory
+- Implementing VIP's security model for file access control and permissions
+- Optimizing media delivery through VIP's CDN and caching infrastructure
+- Ensuring proper integration with VIP's file storage and retrieval services
 
 The plugin is essential for any BuddyPress site running on WordPress VIP, as it ensures media uploads, avatars, and other BuddyPress media features work reliably and securely in the VIP environment.
 
@@ -39,6 +39,11 @@ Webcam captures for user profiles are handled in the same way.
 For cropping, instead of creating a new image, we store the cropping coordinates and later let the Files Service dynamically crop the image on-demand via Photon-like query parameters.
 
 Deleting files is handled by deleting the meta data, and then calling `wp_delete_file()` with the previously stored URL.
+
+### Additional Integrations
+
+- Temporary directories created for group video uploads are cleaned up using WordPress's WP_Filesystem via a custom override. This ensures compatibility and security on VIP Go, replacing the default BuddyPress temp directory removal logic.
+- After a video is moved to a group album, the plugin flushes the BuddyPress media cache to ensure that any cached media data is immediately updated. This is handled automatically via a custom action hook.
 
 ## Installation
 
