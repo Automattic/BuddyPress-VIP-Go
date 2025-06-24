@@ -1021,7 +1021,7 @@ function vipbp_log_thumbnail_creation_attempt_complete( $video ) {
 }
 
 /**
- * Flush the cache for the video after it has been moved to a album.
+ * Flush the media cache after a video has been moved to an album.
  *
  * This function resets the BuddyPress media incrementor to ensure that
  * any cached media data is invalidated after a video is moved.
