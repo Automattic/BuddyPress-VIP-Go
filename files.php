@@ -43,28 +43,15 @@ add_action(
 		add_filter( 'bp_attachments_pre_delete_file', 'vipbp_delete_cover_image', 10, 2 );
 
 		/*
-		* Tweaks for handling temporary directory cleanup.
-		*/
-		add_filter( 'bp_core_remove_temp_directory', 'vipbp_handle_temp_directory_removal', 10, 1 );
-
-		/*
-		* Video upload tracking hooks
-		*/
-		add_action( 'bb_before_video_upload_handler', 'vipbp_log_video_upload_start' );
-		add_action( 'bb_after_video_upload_handler', 'vipbp_log_video_upload_complete' );
-		add_action( 'bb_video_upload', 'vipbp_log_video_upload_attachment', 10, 1 );
-		add_action( 'bb_before_video_preview_image_by_js', 'vipbp_log_preview_image_start' );
-		add_action( 'bb_after_video_preview_image_by_js', 'vipbp_log_preview_image_complete' );
-		add_action( 'bp_video_before_background_process_create', 'vipbp_log_thumbnail_generation_start', 10, 1 );
-		add_action( 'bp_video_after_background_process_create', 'vipbp_log_thumbnail_generation_complete', 10, 1 );
-		add_action( 'bb_video_after_preview_generate', 'vipbp_log_preview_generation_complete' );
-		add_action( 'bp_video_after_background_create_thumbnail', 'vipbp_log_thumbnail_creation_complete', 10, 1 );
-		add_action( 'bb_try_after_video_background_create_thumbnail', 'vipbp_log_thumbnail_creation_attempt_complete', 10, 1 );
-
-		/**
-		 * Tweaks for uploading group videos.
+		 * Tweaks for uploading videos into groups.
 		 */
 		add_filter( 'bp_core_pre_remove_temp_directory', 'vipbp_override_remove_temp_directory', 10, 3 );
+
+    /*
+		 * Tweaks for flushing the cache after moving a video.
+		 */
+		add_action( 'bp_video_after_save', 'vipbp_flush_cache_after_video_move', 99 );
+
 	} 
 );
 
@@ -815,212 +802,6 @@ function vipbp_delete_cover_image( $_, $args ) {
 }
 
 /**
- * Handle temporary directory removal in a VIP Go compatible way.
- *
- * Since the VIP File System uses an object store without a true directory structure,
- * we need to handle file cleanup differently. This function:
- * 1. Uses the system /tmp directory for temporary operations
- * 2. Avoids directory traversal operations
- * 3. Uses WordPress's file system functions where possible
- *
- * @param string $directory Directory to remove.
- * @return array Empty array to prevent reset() error.
- */
-function vipbp_handle_temp_directory_removal( $directory ) {
-	error_log( sprintf(
-		'[VIPBP Video] Temp directory removal handler called. Directory: %s',
-		$directory
-	) );
-
-	if ( empty( $directory ) ) {
-		error_log( '[VIPBP Video] Empty directory provided to removal handler' );
-		return array();
-	}
-
-	// Handle vip:// protocol URLs
-	if ( 0 === strpos( $directory, 'vip://' ) ) {
-		$original_directory = $directory;
-		$directory = str_replace( 'vip://', '', $directory );
-		error_log( sprintf(
-			'[VIPBP Video] Converted vip:// URL. Original: %s, New: %s',
-			$original_directory,
-			$directory
-		) );
-	}
-
-	// Get the system temp directory
-	$tmp_dir = get_temp_dir();
-	
-	// If the directory is in /tmp, we can use normal file operations
-	if ( 0 === strpos( $directory, $tmp_dir ) ) {
-		error_log( sprintf(
-			'[VIPBP Video] Directory is in /tmp. Using normal file operations. Path: %s',
-			$directory
-		) );
-		
-		// Use WordPress's file system functions
-		global $wp_filesystem;
-		if ( ! is_a( $wp_filesystem, 'WP_Filesystem_Base' ) ) {
-			$creds = request_filesystem_credentials( site_url() );
-			wp_filesystem( $creds );
-		}
-
-		if ( is_a( $wp_filesystem, 'WP_Filesystem_Base' ) ) {
-			$result = $wp_filesystem->delete( $directory, true );
-			error_log( sprintf(
-				'[VIPBP Video] WP_Filesystem delete result: %s',
-				$result ? 'success' : 'failed'
-			) );
-		} else {
-			error_log( '[VIPBP Video] WP_Filesystem not available for /tmp operation' );
-		}
-	} else {
-		// For files in the VIP File System, we need to handle them differently
-		// since we can't do directory operations
-		$upload_dir = wp_upload_dir();
-		$basedir = $upload_dir['basedir'];
-		
-		error_log( sprintf(
-			'[VIPBP Video] Directory is in VIP File System. Basedir: %s, Directory: %s',
-			$basedir,
-			$directory
-		) );
-		
-		// If the directory is within uploads, we need to handle it file by file
-		if ( 0 === strpos( $directory, $basedir ) ) {
-			// Get the relative path from uploads
-			$relative_path = substr( $directory, strlen( $basedir ) );
-			
-			error_log( sprintf(
-				'[VIPBP Video] Directory is within uploads. Relative path: %s',
-				$relative_path
-			) );
-			
-			// Use WordPress's file system functions to delete files
-			global $wp_filesystem;
-			if ( ! is_a( $wp_filesystem, 'WP_Filesystem_Base' ) ) {
-				$creds = request_filesystem_credentials( site_url() );
-				wp_filesystem( $creds );
-			}
-
-			if ( is_a( $wp_filesystem, 'WP_Filesystem_Base' ) ) {
-				$result = $wp_filesystem->delete( $directory, true );
-				error_log( sprintf(
-					'[VIPBP Video] WP_Filesystem delete result for VIP File System: %s',
-					$result ? 'success' : 'failed'
-				) );
-			} else {
-				error_log( '[VIPBP Video] WP_Filesystem not available for VIP File System operation' );
-			}
-		} else {
-			error_log( sprintf(
-				'[VIPBP Video] Directory is not within uploads. Directory: %s',
-				$directory
-			) );
-		}
-	}
-
-	error_log( '[VIPBP Video] Temp directory removal handler completed' );
-	return array();
-}
-
-/**
- * Log the start of a video upload operation.
- */
-function vipbp_log_video_upload_start() {
-	error_log( '[VIPBP Video] Starting video upload' );
-}
-
-/**
- * Log the completion of a video upload operation.
- */
-function vipbp_log_video_upload_complete() {
-	error_log( '[VIPBP Video] Completed video upload' );
-}
-
-/**
- * Log video upload attachment details.
- *
- * @param mixed $attachment The attachment object.
- */
-function vipbp_log_video_upload_attachment( $attachment ) {
-	error_log( sprintf(
-		'[VIPBP Video] Video upload attachment created. ID: %d, Title: %s',
-		$attachment->ID,
-		$attachment->post_title
-	) );
-}
-
-/**
- * Log the start of a preview image operation.
- */
-function vipbp_log_preview_image_start() {
-	error_log( '[VIPBP Video] Starting preview image processing' );
-}
-
-/**
- * Log the completion of a preview image operation.
- */
-function vipbp_log_preview_image_complete() {
-	error_log( '[VIPBP Video] Completed preview image processing' );
-}
-
-/**
- * Log the start of thumbnail generation.
- *
- * @param BP_Video $video The video object.
- */
-function vipbp_log_thumbnail_generation_start( $video ) {
-	error_log( sprintf(
-		'[VIPBP Video] Starting thumbnail generation for video ID: %d',
-		$video->id
-	) );
-}
-
-/**
- * Log the completion of thumbnail generation.
- *
- * @param BP_Video $video The video object.
- */
-function vipbp_log_thumbnail_generation_complete( $video ) {
-	error_log( sprintf(
-		'[VIPBP Video] Completed thumbnail generation for video ID: %d',
-		$video->id
-	) );
-}
-
-/**
- * Log the completion of preview generation.
- */
-function vipbp_log_preview_generation_complete() {
-	error_log( '[VIPBP Video] Completed preview generation' );
-}
-
-/**
- * Log the completion of thumbnail creation.
- *
- * @param BP_Video $video The video object.
- */
-function vipbp_log_thumbnail_creation_complete( $video ) {
-	error_log( sprintf(
-		'[VIPBP Video] Completed thumbnail creation for video ID: %d',
-		$video->id
-	) );
-}
-
-/**
- * Log the completion of thumbnail creation attempt.
- *
- * @param BP_Video $video The video object.
- */
-function vipbp_log_thumbnail_creation_attempt_complete( $video ) {
-	error_log( sprintf(
-		'[VIPBP Video] Completed thumbnail creation attempt for video ID: %d',
-		$video->id
-	) );
-}
-
-/**
  * Override bp_core_remove_temp_directory on VIP to use WP_Filesystem.
  *
  * @param bool   $override   Whether to override the default behavior.
@@ -1031,12 +812,23 @@ function vipbp_log_thumbnail_creation_attempt_complete( $video ) {
  */
 function vipbp_override_remove_temp_directory( $override, $directory, $image_name ) {
 	$file_path = trailingslashit( $directory ) . $image_name . '.jpg';
-	if ( file_exists( $file_path ) ) {
+	
+  if ( file_exists( $file_path ) ) {
 		// Skip default directory deletion logic.
 		wp_delete_file( $file_path );
 		return true;
-	} else {
-		// Continue with default behavior.
-		return false;
 	}
+
+  // Continue with default behavior.
+	return false;
+}
+
+/**
+ * Flush the media cache after a video has been moved to an album.
+ *
+ * This function resets the BuddyPress media incrementor to ensure that
+ * any cached media data is invalidated after a video is moved.
+ */
+function vipbp_flush_cache_after_video_move() {
+	bp_core_reset_incrementor( 'bp_media' );
 }
