@@ -41,6 +41,11 @@ add_action(
 		*/
 		add_filter( 'bp_core_pre_delete_existing_avatar', 'vipbp_delete_existing_avatar', 10, 2 );
 		add_filter( 'bp_attachments_pre_delete_file', 'vipbp_delete_cover_image', 10, 2 );
+
+		/*
+		 * Tweaks for flushing the cache after moving a video.
+		 */
+		add_action( 'bp_video_after_save', 'vipbp_flush_cache_after_video_move', 99 );
 	} 
 );
 
@@ -788,4 +793,14 @@ function vipbp_delete_cover_image( $_, $args ) {
 	}
 
 	return false;
+}
+
+/**
+ * Flush the media cache after a video has been moved to an album.
+ *
+ * This function resets the BuddyPress media incrementor to ensure that
+ * any cached media data is invalidated after a video is moved.
+ */
+function vipbp_flush_cache_after_video_move() {
+	bp_core_reset_incrementor( 'bp_media' );
 }
