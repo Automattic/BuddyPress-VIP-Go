@@ -11,36 +11,32 @@ defined( 'ABSPATH' ) || exit;
 add_action(
 	'bp_init',
 	function () {
-		/*
-		* Tweaks for fetching avatars and cover images -- bp_core_fetch_avatar() and bp_attachments_get_attachment().
-		*/
+		// Tweaks for fetching avatars and cover images -- bp_core_fetch_avatar() and bp_attachments_get_attachment().
 		add_filter( 'bp_core_avatar_folder_dir', '__return_empty_string' );
 		add_filter( 'bp_core_fetch_avatar_no_grav', '__return_true' );
 		add_filter( 'bp_core_default_avatar_user', 'vipbp_filter_user_avatar_urls', 10, 2 );
 		add_filter( 'bp_core_default_avatar_group', 'vipbp_filter_group_avatar_urls', 10, 2 );
 		add_filter( 'bp_attachments_pre_get_attachment', 'vipbp_filter_get_cover_image', 10, 2 );
 
-		/*
-		* Tweaks for uploading user and group avatars -- bp_core_avatar_handle_upload().
-		*/
+		// Tweaks for uploading user and group avatars -- bp_core_avatar_handle_upload().
 		add_filter( 'bp_core_pre_avatar_handle_upload', 'vipbp_handle_avatar_upload', 10, 3 );
 		add_filter( 'bp_avatar_pre_handle_capture', 'vipbp_handle_avatar_capture', 10, 3 );
 
-		/*
-		* Tweaks for uploading cover images -- bp_attachments_cover_image_ajax_upload().
-		*/
+		// Tweaks for uploading cover images -- bp_attachments_cover_image_ajax_upload().
 		add_filter( 'bp_attachments_pre_cover_image_ajax_upload', 'vip_handle_cover_image_upload', 10, 4 );
 
-		/*
-		* Tweaks for cropping user and group avatars -- bp_core_avatar_handle_crop().
-		*/
+		// Tweaks for cropping user and group avatars -- bp_core_avatar_handle_crop().
 		add_filter( 'bp_core_pre_avatar_handle_crop', 'vipbp_handle_avatar_crop', 10, 2 );
 
-		/*
-		* Tweaks for deleting avatars and cover images -- bp_core_delete_existing_avatar() and bp_attachments_delete_file().
-		*/
+		// Tweaks for deleting avatars and cover images -- bp_core_delete_existing_avatar() and bp_attachments_delete_file().
 		add_filter( 'bp_core_pre_delete_existing_avatar', 'vipbp_delete_existing_avatar', 10, 2 );
 		add_filter( 'bp_attachments_pre_delete_file', 'vipbp_delete_cover_image', 10, 2 );
+
+		// Tweaks for uploading videos into groups.
+		add_filter( 'bp_core_pre_remove_temp_directory', 'vipbp_override_remove_temp_directory', 10, 3 );
+
+		// Tweaks for flushing the cache after moving a video.
+		add_action( 'bp_video_after_save', 'vipbp_flush_cache_after_video_move', 99 );
 	} 
 );
 
@@ -788,4 +784,36 @@ function vipbp_delete_cover_image( $_, $args ) {
 	}
 
 	return false;
+}
+
+/**
+ * Override bp_core_remove_temp_directory on VIP to use WP_Filesystem.
+ *
+ * @param bool   $override   Whether to override the default behavior.
+ * @param string $directory  The directory to remove.
+ * @param string $image_name The name of the image file to delete.
+ *
+ * @return bool True if overridden on VIP, otherwise false.
+ */
+function vipbp_override_remove_temp_directory( $override, $directory, $image_name ) {
+	$file_path = trailingslashit( $directory ) . $image_name . '.jpg';
+	
+	if ( file_exists( $file_path ) ) {
+		// Skip default directory deletion logic.
+		wp_delete_file( $file_path );
+		return true;
+	}
+
+	// Continue with default behavior.
+	return false;
+}
+
+/**
+ * Flush the media cache after a video has been moved to an album.
+ *
+ * This function resets the BuddyPress media incrementor to ensure that
+ * any cached media data is invalidated after a video is moved.
+ */
+function vipbp_flush_cache_after_video_move() {
+	bp_core_reset_incrementor( 'bp_media' );
 }
