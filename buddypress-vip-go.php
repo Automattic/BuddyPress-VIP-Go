@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 add_action(
 	'bp_loaded',
 	function () {
-		if ( ! class_exists( 'A8C_Files' ) || ! defined( 'FILES_CLIENT_SITE_ID' ) || ! defined( 'FILES_ACCESS_TOKEN' ) ) {
+		if ( ! defined( 'DOING_AJAX' ) || ! class_exists( 'A8C_Files' ) || ! defined( 'FILES_CLIENT_SITE_ID' ) || ! defined( 'FILES_ACCESS_TOKEN' ) ) {
 			return;
 		}
 
